@@ -1,0 +1,33 @@
+{
+
+  "name": "notechain-contract",
+  "version": "1.0.0",
+  "description": "NoteChain App Solidity contract",
+  "main": "index.js",
+
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "recompile": "npx hardhat clean && rm -rf ./ABI && npx hardhat compile && mkdir -p ./ABI && cp ./artifacts/contracts/NoteChain.sol/NoteChain.json ./ABI/"
+  },
+
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dex2code/notechain-contract.git"
+  },
+
+  "author": "EDK",
+  "license": "MIT",
+
+  "bugs": {
+    "url": "https://github.com/dex2code/notechain-contract/issues"
+  },
+
+  "homepage": "https://github.com/dex2code/notechain-contract#readme",
+
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "dotenv": "^16.0.3",
+    "hardhat": "^2.12.0"
+  }
+
+}
