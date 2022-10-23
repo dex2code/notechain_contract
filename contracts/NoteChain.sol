@@ -35,9 +35,6 @@ contract NoteChain {
 
         contractOwner   = msg.sender;
         contractManager = msg.sender;
-
-        registerPrice   = 0;
-        editPrice       = 0;
     }
 
 
