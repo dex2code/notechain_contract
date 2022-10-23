@@ -24,9 +24,9 @@ contract NoteChain {
     mapping (address => Profile) private authorProfile;
 
 
-    event registerFeeReceived(address indexed _authorAddress, uint _paidAmount, uint256 _feeTimestamp);
-    event editFeeReceived(address indexed _authorAddress, uint _paidAmount, uint256 _feeTimestamp);
-    event unregisterFeeReceived(address indexed _authorAddress, uint _paidAmount, uint256 _feeTimestamp);
+    event registerEvent(address indexed _authorAddress, uint _paidAmount, uint256 _feeTimestamp);
+    event editEvent(address indexed _authorAddress, uint _paidAmount, uint256 _feeTimestamp);
+    event unregisterEvent(address indexed _authorAddress, uint _paidAmount, uint256 _feeTimestamp);
     
 
     constructor() {
@@ -35,6 +35,9 @@ contract NoteChain {
 
         contractOwner   = msg.sender;
         contractManager = msg.sender;
+
+        registerPrice   = 0;
+        editPrice       = 0;
     }
 
 
@@ -124,7 +127,7 @@ contract NoteChain {
         authorProfile[msg.sender].authorName   = _authorName;
         authorProfile[msg.sender].registerTime = block.timestamp;
 
-        emit registerFeeReceived(msg.sender, msg.value, block.timestamp);
+        emit registerEvent(msg.sender, msg.value, block.timestamp);
     }
 
     function setAuthorName(string calldata _newAuthorName) external payable requireValidOrigin requireRegisteredAuthor requireEditFee {
@@ -132,7 +135,7 @@ contract NoteChain {
         authorProfile[msg.sender].authorName   = _newAuthorName;
         authorProfile[msg.sender].lastEditTime = block.timestamp;
 
-        emit editFeeReceived(msg.sender, msg.value, block.timestamp);
+        emit editEvent(msg.sender, msg.value, block.timestamp);
     }
 
     function setIpfsFileHash(string calldata _newIpfsFileHash) external payable requireValidOrigin requireRegisteredAuthor requireEditFee {
@@ -141,7 +144,7 @@ contract NoteChain {
         authorProfile[msg.sender].ipfsCurrentFileHash  = _newIpfsFileHash;
         authorProfile[msg.sender].lastEditTime = block.timestamp;
 
-        emit editFeeReceived(msg.sender, msg.value, block.timestamp);
+        emit editEvent(msg.sender, msg.value, block.timestamp);
     }
 
 
@@ -151,7 +154,7 @@ contract NoteChain {
     }
 
 
-    function removeRegisteredAuthor() external payable requireValidOrigin requireRegisteredAuthor requireRegisterFee {
+    function removeRegisteredAuthor() external payable requireValidOrigin requireRegisteredAuthor requireEditFee {
 
         authorProfile[msg.sender].isRegistered         = false;
         authorProfile[msg.sender].authorName           = "";
@@ -160,7 +163,7 @@ contract NoteChain {
         authorProfile[msg.sender].ipfsCurrentFileHash  = "";
         authorProfile[msg.sender].ipfsPreviousFileHash = "";
 
-        emit unregisterFeeReceived(msg.sender, msg.value, block.timestamp);
+        emit unregisterEvent(msg.sender, msg.value, block.timestamp);
     }
 
 }
