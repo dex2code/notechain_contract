@@ -156,13 +156,8 @@ contract NoteChain {
 
     function removeRegisteredAuthor() external payable requireValidOrigin requireRegisteredAuthor requireEditFee {
 
-        authorProfile[msg.sender].isRegistered         = false;
-        authorProfile[msg.sender].authorName           = "";
-        authorProfile[msg.sender].registerTime         = 0;
-        authorProfile[msg.sender].lastEditTime         = 0;
-        authorProfile[msg.sender].ipfsCurrentFileHash  = "";
-        authorProfile[msg.sender].ipfsPreviousFileHash = "";
-
+        delete(authorProfile[msg.sender]);
+        
         emit unregisterEvent(msg.sender, msg.value, block.timestamp);
     }
 
