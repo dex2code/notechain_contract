@@ -131,14 +131,9 @@ contract NoteChain {
     }
 
 
-    function setPaused() external requireValidOrigin requireContractManager {
+    function switchPaused() external requireValidOrigin requireContractManager {
 
-        paused = true;
-    }
-
-    function setNotPaused() external requireValidOrigin requireContractManager {
-
-        paused = false;
+        paused = !paused;
     }
 
 
