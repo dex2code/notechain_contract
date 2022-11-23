@@ -125,7 +125,7 @@ contract NoteChain {
 
     function withdrawPartContractBalance(address payable _withdrawReceiver, uint256 _withdrawAmount) external requireValidOrigin requireContractManager {
 
-        require(_withdrawAmount <= contractAddress.balance, "invalid withdraw amount");
+        require(_withdrawAmount <= contractAddress.balance, "Invalid withdraw value!");
 
         _withdrawReceiver.transfer(_withdrawAmount);
     }
@@ -165,7 +165,7 @@ contract NoteChain {
 
         authorProfile[msg.sender].ipfsPreviousFileHash = authorProfile[msg.sender].ipfsCurrentFileHash;
         authorProfile[msg.sender].ipfsCurrentFileHash  = _newIpfsFileHash;
-        authorProfile[msg.sender].lastEditTime = block.timestamp;
+        authorProfile[msg.sender].lastEditTime         = block.timestamp;
 
         emit editEvent(msg.sender, msg.value, block.timestamp);
     }
