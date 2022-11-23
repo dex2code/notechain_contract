@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/// @custom:unique 67a974fe-ff5e-4e9c-8e3a-ebb65177bfe4
+/// @custom:security-contact notechain.online@gmail.com
 contract NoteChain {
 
     address public contractAddress;
@@ -10,6 +12,8 @@ contract NoteChain {
 
     uint256 public registerPrice;
     uint256 public editPrice;
+
+    bool    public paused;
 
 
     struct Profile {
@@ -24,9 +28,9 @@ contract NoteChain {
     mapping (address => Profile) private authorProfile;
 
 
-    event registerEvent(address indexed _authorAddress, uint _paidAmount, uint256 _feeTimestamp);
-    event editEvent(address indexed _authorAddress, uint _paidAmount, uint256 _feeTimestamp);
-    event unregisterEvent(address indexed _authorAddress, uint _paidAmount, uint256 _feeTimestamp);
+    event registerEvent(address indexed _authorAddress, uint _paidAmount, uint256 _eventTimestamp);
+    event editEvent(address indexed _authorAddress, uint _paidAmount, uint256 _eventTimestamp);
+    event unregisterEvent(address indexed _authorAddress, uint256 _eventTimestamp);
     
 
     constructor() {
@@ -38,50 +42,58 @@ contract NoteChain {
 
         registerPrice   = 0;
         editPrice       = 0;
+
+        paused          = false;
     }
 
 
     modifier requireValidCaller() {
 
-        require(msg.sender != address(0), "wrong caller address");
+        require(msg.sender != address(0), "Wrong caller address!");
         _;
     }
 
     modifier requireValidOrigin() {
 
-        require(msg.sender != address(0), "wrong caller address");
-        require(msg.sender == tx.origin, "wrong origin address");
-        require(msg.sender.code.length == 0, "contracts not allowed");
+        require(msg.sender != address(0), "Wrong caller address!");
+        require(msg.sender == tx.origin, "Wrong origin address!");
+        require(msg.sender.code.length == 0, "Contracts not allowed!");
         _;
     }
 
     modifier requireContractOwner() {
 
-        require(msg.sender == contractOwner, "you are not an owner");
+        require(msg.sender == contractOwner, "You are not an owner!");
         _;
     }
 
     modifier requireContractManager() {
 
-        require(msg.sender == contractOwner || msg.sender == contractManager, "you are not a manager");
+        require(msg.sender == contractOwner || msg.sender == contractManager, "You are not a manager!");
         _;
     }
 
     modifier requireRegisteredAuthor() {
 
-        require(authorProfile[msg.sender].isRegistered == true, "you are not an author");
+        require(authorProfile[msg.sender].isRegistered == true, "You are not an author!");
         _;
     }
 
     modifier requireRegisterFee() {
 
-        require(msg.value == registerPrice, "incorrect register fee value");
+        require(msg.value == registerPrice, "Incorrect register fee value!");
         _;
     }
 
     modifier requireEditFee() {
 
-        require(msg.value == editPrice, "incorrect edit fee value");
+        require(msg.value == editPrice, "Incorrect edit fee value!");
+        _;
+    }
+
+    modifier requireNotPaused() {
+
+        require(paused == false, "Service paused due to maintenance!");
         _;
     }
 
@@ -119,7 +131,18 @@ contract NoteChain {
     }
 
 
-    function registerNewAuthor(string calldata _authorName) external payable requireValidOrigin requireRegisterFee {
+    function setPaused() external requireValidOrigin requireContractManager {
+
+        paused = true;
+    }
+
+    function setNotPaused() external requireValidOrigin requireContractManager {
+
+        paused = false;
+    }
+
+
+    function registerNewAuthor(string calldata _authorName) external payable requireNotPaused requireValidOrigin requireRegisterFee {
 
         require(authorProfile[msg.sender].isRegistered == false, "you are already an author");
 
@@ -130,7 +153,7 @@ contract NoteChain {
         emit registerEvent(msg.sender, msg.value, block.timestamp);
     }
 
-    function setAuthorName(string calldata _newAuthorName) external payable requireValidOrigin requireRegisteredAuthor requireEditFee {
+    function setAuthorName(string calldata _newAuthorName) external payable requireNotPaused requireValidOrigin requireRegisteredAuthor requireEditFee {
 
         authorProfile[msg.sender].authorName   = _newAuthorName;
         authorProfile[msg.sender].lastEditTime = block.timestamp;
@@ -138,7 +161,7 @@ contract NoteChain {
         emit editEvent(msg.sender, msg.value, block.timestamp);
     }
 
-    function setIpfsFileHash(string calldata _newIpfsFileHash) external payable requireValidOrigin requireRegisteredAuthor requireEditFee {
+    function setIpfsFileHash(string calldata _newIpfsFileHash) external payable requireNotPaused requireValidOrigin requireRegisteredAuthor requireEditFee {
 
         authorProfile[msg.sender].ipfsPreviousFileHash = authorProfile[msg.sender].ipfsCurrentFileHash;
         authorProfile[msg.sender].ipfsCurrentFileHash  = _newIpfsFileHash;
@@ -148,17 +171,17 @@ contract NoteChain {
     }
 
 
-    function getBootstrap() external view requireValidCaller returns (uint256, uint256, Profile memory) {
+    function getBootstrap() external view requireValidCaller returns (bool, uint256, uint256, Profile memory) {
 
-        return (registerPrice, editPrice, authorProfile[msg.sender]);
+        return (paused, registerPrice, editPrice, authorProfile[msg.sender]);
     }
 
 
-    function removeRegisteredAuthor() external payable requireValidOrigin requireRegisteredAuthor requireEditFee {
+    function removeRegisteredAuthor() external requireValidOrigin requireRegisteredAuthor {
 
         delete(authorProfile[msg.sender]);
         
-        emit unregisterEvent(msg.sender, msg.value, block.timestamp);
+        emit unregisterEvent(msg.sender, block.timestamp);
     }
 
 }
