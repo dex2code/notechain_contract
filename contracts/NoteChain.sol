@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+
 /// @custom:unique 67a974fe-ff5e-4e9c-8e3a-ebb65177bfe4
 /// @custom:security-contact notechain.online@gmail.com
 contract NoteChain {
@@ -178,7 +179,7 @@ contract NoteChain {
     function removeRegisteredAuthor() external requireValidOrigin requireRegisteredAuthor {
 
         delete(authorProfile[msg.sender]);
-        
+
         numberAuthors--;
         
         emit unregisterEvent(msg.sender, block.timestamp);
