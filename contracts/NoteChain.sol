@@ -5,15 +5,18 @@ pragma solidity ^0.8.0;
 /// @custom:security-contact notechain.online@gmail.com
 contract NoteChain {
 
-    address public contractAddress;
+    address   public  contractAddress;
 
-    address public contractOwner;
-    address public contractManager;
+    address   public  contractOwner;
+    address   public  contractManager;
 
-    uint256 public registerPrice;
-    uint256 public editPrice;
+    uint256   public  registerPrice;
+    uint256   public  editPrice;
 
-    bool    public paused;
+    bool      public  paused;
+
+    address[] private registeredAuthors;
+    uint256   public  numberAuthors;
 
 
     struct Profile {
@@ -44,6 +47,8 @@ contract NoteChain {
         editPrice       = 0;
 
         paused          = false;
+
+        numberAuthors   = 0;
     }
 
 
@@ -118,12 +123,7 @@ contract NoteChain {
     }
 
 
-    function withdrawAllContractBalance(address payable _withdrawReceiver) external requireValidOrigin requireContractManager {
-
-        _withdrawReceiver.transfer(contractAddress.balance);
-    }
-
-    function withdrawPartContractBalance(address payable _withdrawReceiver, uint256 _withdrawAmount) external requireValidOrigin requireContractManager {
+    function withdrawContractBalance(address payable _withdrawReceiver, uint256 _withdrawAmount) external requireValidOrigin requireContractManager {
 
         require(_withdrawAmount <= contractAddress.balance, "Invalid withdraw value!");
 
@@ -139,11 +139,14 @@ contract NoteChain {
 
     function registerNewAuthor(string calldata _authorName) external payable requireNotPaused requireValidOrigin requireRegisterFee {
 
-        require(authorProfile[msg.sender].isRegistered == false, "you are already an author");
+        require(authorProfile[msg.sender].isRegistered == false, "You are already an author!");
 
         authorProfile[msg.sender].isRegistered = true;
         authorProfile[msg.sender].authorName   = _authorName;
         authorProfile[msg.sender].registerTime = block.timestamp;
+
+        registeredAuthors.push(msg.sender);
+        numberAuthors++;
 
         emit registerEvent(msg.sender, msg.value, block.timestamp);
     }
@@ -176,7 +179,20 @@ contract NoteChain {
 
         delete(authorProfile[msg.sender]);
         
+        numberAuthors--;
+        
         emit unregisterEvent(msg.sender, block.timestamp);
+    }
+
+
+    function getAllAuthors() external view requireValidCaller returns (address[] memory) {
+
+        return registeredAuthors;
+    }
+
+    function getAuthorProfile() external view requireValidCaller returns (Profile memory) {
+
+        return authorProfile[msg.sender];
     }
 
 }
