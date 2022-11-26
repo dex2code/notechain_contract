@@ -1,7 +1,7 @@
 require("dotenv").config();
 require("@nomicfoundation/hardhat-toolbox");
 
-const { WALLET_PRIVATE_KEY, ALCHEMY_MUMBAI_URL, ALCHEMY_MAINNET_URL, POLYGON_API_KEY } = process.env;
+const { WALLET_PRIVATE_KEY, ALCHEMY_MUMBAI_URL, ALCHEMY_MAINNET_URL, POLYGON_API_KEY, GAS_PRICE } = process.env;
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {

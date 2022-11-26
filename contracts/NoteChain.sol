@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 
-/// @custom:unique 1fac47e6-976d-4b76-b0ad-6b5e5360b8b5
+/// @custom:unique 7bc85710-1b38-4b30-8039-b52f3e9e079d
 /// @custom:security-contact notechain.online@gmail.com
 contract NoteChain {
 
