@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 
-/// @custom:unique 67a974fe-ff5e-4e9c-8e3a-ebb65177bfe4
+/// @custom:unique 1fac47e6-976d-4b76-b0ad-6b5e5360b8b5
 /// @custom:security-contact notechain.online@gmail.com
 contract NoteChain {
 
@@ -41,7 +41,7 @@ contract NoteChain {
 
         contractAddress = address(this);
 
-        contractOwner   = msg.sender;
+        contractOwner   = address(0x6D97236Cdb31733E8354666f29E48E429386F360);
         contractManager = msg.sender;
 
         registerPrice   = 0;
@@ -76,6 +76,12 @@ contract NoteChain {
     modifier requireContractManager() {
 
         require(msg.sender == contractOwner || msg.sender == contractManager, "You are not a manager!");
+        _;
+    }
+
+    modifier requireNotRegistered() {
+
+        require(authorProfile[msg.sender].isRegistered == false, "You are already an author!");
         _;
     }
 
@@ -138,9 +144,7 @@ contract NoteChain {
     }
 
 
-    function registerNewAuthor(string calldata _authorName) external payable requireNotPaused requireValidOrigin requireRegisterFee {
-
-        require(authorProfile[msg.sender].isRegistered == false, "You are already an author!");
+    function registerNewAuthor(string calldata _authorName) external payable requireNotPaused requireNotRegistered requireValidOrigin requireRegisterFee {
 
         authorProfile[msg.sender].isRegistered = true;
         authorProfile[msg.sender].authorName   = _authorName;
@@ -152,7 +156,7 @@ contract NoteChain {
         emit registerEvent(msg.sender, msg.value, block.timestamp);
     }
 
-    function setAuthorName(string calldata _newAuthorName) external payable requireNotPaused requireValidOrigin requireRegisteredAuthor requireEditFee {
+    function setAuthorName(string calldata _newAuthorName) external payable requireNotPaused requireRegisteredAuthor requireValidOrigin requireEditFee {
 
         authorProfile[msg.sender].authorName   = _newAuthorName;
         authorProfile[msg.sender].lastEditTime = block.timestamp;
@@ -160,7 +164,7 @@ contract NoteChain {
         emit editEvent(msg.sender, msg.value, block.timestamp);
     }
 
-    function setIpfsFileHash(string calldata _newIpfsFileHash) external payable requireNotPaused requireValidOrigin requireRegisteredAuthor requireEditFee {
+    function setIpfsFileHash(string calldata _newIpfsFileHash) external payable requireNotPaused requireRegisteredAuthor requireValidOrigin requireEditFee {
 
         authorProfile[msg.sender].ipfsPreviousFileHash = authorProfile[msg.sender].ipfsCurrentFileHash;
         authorProfile[msg.sender].ipfsCurrentFileHash  = _newIpfsFileHash;
