@@ -34,6 +34,7 @@ contract NoteChain {
 
 
     event registerEvent(address indexed _authorAddress, uint256 _eventTimestamp);
+    event opRegisterEvent(address indexed _authorAddress, uint256 _eventTimestamp);
     event editEvent(address indexed _authorAddress, uint256 _eventTimestamp);
     event unregisterEvent(address indexed _authorAddress, uint256 _eventTimestamp);
     
@@ -176,7 +177,7 @@ contract NoteChain {
         registeredAuthors.push(_authorAddress);
         numberAuthors++;
 
-        emit registerEvent(_authorAddress, block.timestamp);
+        emit opRegisterEvent(_authorAddress, block.timestamp);
     }
 
     function setAuthorName(string calldata _newAuthorName) external payable requireNotPaused requireRegisteredAuthor requireValidOrigin requireEditFee {
