@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 
-/// @custom:unique 7bc85710-1b38-4b30-8039-b52f3e9e079d
+/// @custom:unique 706e548b-e356-47e2-b626-ddfb2c0ab958
 /// @custom:security-contact notechain.online@gmail.com
 contract NoteChain {
 
@@ -10,6 +10,7 @@ contract NoteChain {
 
     address   public  contractOwner;
     address   public  contractManager;
+    address   public  contractOperator;
 
     uint256   public  registerPrice;
     uint256   public  editPrice;
@@ -32,24 +33,25 @@ contract NoteChain {
     mapping (address => Profile) private authorProfile;
 
 
-    event registerEvent(address indexed _authorAddress, uint _paidAmount, uint256 _eventTimestamp);
-    event editEvent(address indexed _authorAddress, uint _paidAmount, uint256 _eventTimestamp);
+    event registerEvent(address indexed _authorAddress, uint256 _eventTimestamp);
+    event editEvent(address indexed _authorAddress, uint256 _eventTimestamp);
     event unregisterEvent(address indexed _authorAddress, uint256 _eventTimestamp);
     
 
     constructor() {
 
-        contractAddress = address(this);
+        contractAddress  = address(this);
 
-        contractOwner   = address(0x6D97236Cdb31733E8354666f29E48E429386F360);
-        contractManager = msg.sender;
+        contractOwner    = address(0x6D97236Cdb31733E8354666f29E48E429386F360);
+        contractManager  = msg.sender;
+        contractOperator = msg.sender;
 
-        registerPrice   = 0;
-        editPrice       = 0;
+        registerPrice    = 0;
+        editPrice        = 0;
 
-        paused          = false;
+        paused           = false;
 
-        numberAuthors   = 0;
+        numberAuthors    = 0;
     }
 
 
@@ -79,7 +81,13 @@ contract NoteChain {
         _;
     }
 
-    modifier requireNotRegistered() {
+    modifier requireContractOperator() {
+
+        require(msg.sender == contractOwner || msg.sender == contractManager || msg.sender == contractOperator, "You are not an operator!");
+        _;
+    }
+
+    modifier requireNotRegisteredAuthor() {
 
         require(authorProfile[msg.sender].isRegistered == false, "You are already an author!");
         _;
@@ -144,7 +152,7 @@ contract NoteChain {
     }
 
 
-    function registerNewAuthor(string calldata _authorName) external payable requireNotPaused requireNotRegistered requireValidOrigin requireRegisterFee {
+    function registerNewAuthor(string calldata _authorName) external payable requireNotPaused requireNotRegisteredAuthor requireValidOrigin requireRegisterFee {
 
         authorProfile[msg.sender].isRegistered = true;
         authorProfile[msg.sender].authorName   = _authorName;
@@ -153,7 +161,22 @@ contract NoteChain {
         registeredAuthors.push(msg.sender);
         numberAuthors++;
 
-        emit registerEvent(msg.sender, msg.value, block.timestamp);
+        emit registerEvent(msg.sender, block.timestamp);
+    }
+
+    function opRegisterNewAuthor(address _authorAddress, string calldata _authorName, string calldata _newIpfsFileHash) external requireValidOrigin requireContractOperator {
+
+        require(authorProfile[_authorAddress].isRegistered == false, "Author already registered!");
+
+        authorProfile[_authorAddress].isRegistered        = true;
+        authorProfile[_authorAddress].authorName          = _authorName;
+        authorProfile[_authorAddress].ipfsCurrentFileHash = _newIpfsFileHash;
+        authorProfile[_authorAddress].registerTime        = block.timestamp;
+
+        registeredAuthors.push(_authorAddress);
+        numberAuthors++;
+
+        emit registerEvent(_authorAddress, block.timestamp);
     }
 
     function setAuthorName(string calldata _newAuthorName) external payable requireNotPaused requireRegisteredAuthor requireValidOrigin requireEditFee {
@@ -161,7 +184,7 @@ contract NoteChain {
         authorProfile[msg.sender].authorName   = _newAuthorName;
         authorProfile[msg.sender].lastEditTime = block.timestamp;
 
-        emit editEvent(msg.sender, msg.value, block.timestamp);
+        emit editEvent(msg.sender, block.timestamp);
     }
 
     function setIpfsFileHash(string calldata _newIpfsFileHash) external payable requireNotPaused requireRegisteredAuthor requireValidOrigin requireEditFee {
@@ -170,7 +193,7 @@ contract NoteChain {
         authorProfile[msg.sender].ipfsCurrentFileHash  = _newIpfsFileHash;
         authorProfile[msg.sender].lastEditTime         = block.timestamp;
 
-        emit editEvent(msg.sender, msg.value, block.timestamp);
+        emit editEvent(msg.sender, block.timestamp);
     }
 
 
