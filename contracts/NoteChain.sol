@@ -72,43 +72,42 @@ contract NoteChain {
 
     modifier requireContractOwner() {
 
-        require(msg.sender == contractOwner, "You are not an owner!");
+        require(msg.sender == contractOwner, "You are not an Owner!");
         _;
     }
 
     modifier requireContractManager() {
 
-        require(msg.sender == contractOwner || msg.sender == contractManager, "You are not a manager!");
+        require(msg.sender == contractOwner || msg.sender == contractManager, "You are not a Manager!");
         _;
     }
 
     modifier requireContractOperator() {
 
-        require(msg.sender == contractOwner || msg.sender == contractManager || msg.sender == contractOperator, "You are not an operator!");
+        require(msg.sender == contractOwner || msg.sender == contractManager || msg.sender == contractOperator, "You are not an Operator!");
         _;
     }
 
     modifier requireNotRegisteredAuthor() {
 
-        require(authorProfile[msg.sender].isRegistered == false, "You are already an author!");
+        require(authorProfile[msg.sender].isRegistered == false, "You are already an Author!");
         _;
     }
 
     modifier requireRegisteredAuthor() {
 
-        require(authorProfile[msg.sender].isRegistered == true, "You are not an author!");
+        require(authorProfile[msg.sender].isRegistered == true, "You are not an Author yet!");
         _;
     }
 
     modifier requireRegisterFee() {
 
-        require(msg.value == registerPrice, "Incorrect register fee value!");
+        require(msg.value == registerPrice, "Incorrect Register Fee value!");
         _;
     }
 
     modifier requireEditFee() {
-
-        require(msg.value == editPrice, "Incorrect edit fee value!");
+        require(msg.value == editPrice, "Incorrect Edit Fee value!");
         _;
     }
 
@@ -128,6 +127,12 @@ contract NoteChain {
         contractManager = _newContractManager;
     }
 
+    function setContractOperator(address _newContractOperator) external requireValidOrigin requireContractManager {
+
+        contractManager = _newContractOperator;
+    }
+
+
     function setRegisterPrice(uint256 _newRegisterPrice) external requireValidOrigin requireContractManager {
 
         registerPrice = _newRegisterPrice;
@@ -139,7 +144,7 @@ contract NoteChain {
     }
 
 
-    function withdrawContractBalance(address payable _withdrawReceiver, uint256 _withdrawAmount) external requireValidOrigin requireContractManager {
+    function withdrawContractBalance(address payable _withdrawReceiver, uint256 _withdrawAmount) external requireValidOrigin requireContractOwner {
 
         require(_withdrawAmount <= contractAddress.balance, "Invalid withdraw value!");
 
