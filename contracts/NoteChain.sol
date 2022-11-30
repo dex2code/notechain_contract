@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 
-/// @custom:unique 706e548b-e356-47e2-b626-ddfb2c0ab958
+/// @custom:unique 5fde3312-1462-4568-bbc3-b56320c4c4a4
 /// @custom:security-contact notechain.online@gmail.com
 contract NoteChain {
 
@@ -46,13 +46,6 @@ contract NoteChain {
         contractOwner    = address(0x6D97236Cdb31733E8354666f29E48E429386F360);
         contractManager  = msg.sender;
         contractOperator = msg.sender;
-
-        registerPrice    = 0;
-        editPrice        = 0;
-
-        paused           = false;
-
-        numberAuthors    = 0;
     }
 
 
@@ -122,29 +115,29 @@ contract NoteChain {
     }
 
 
-    function setContractManager(address _newContractManager) external requireValidOrigin requireContractOwner {
+    function setContractManager(address _newContractManager) external requireContractOwner {
 
         contractManager = _newContractManager;
     }
 
-    function setContractOperator(address _newContractOperator) external requireValidOrigin requireContractManager {
+    function setContractOperator(address _newContractOperator) external requireContractManager {
 
         contractManager = _newContractOperator;
     }
 
 
-    function setRegisterPrice(uint256 _newRegisterPrice) external requireValidOrigin requireContractManager {
+    function setRegisterPrice(uint256 _newRegisterPrice) external requireContractManager {
 
         registerPrice = _newRegisterPrice;
     }
 
-    function setEditPrice(uint256 _newEditPrice) external requireValidOrigin requireContractManager {
+    function setEditPrice(uint256 _newEditPrice) external requireContractManager {
 
         editPrice = _newEditPrice;
     }
 
 
-    function withdrawContractBalance(address payable _withdrawReceiver, uint256 _withdrawAmount) external requireValidOrigin requireContractOwner {
+    function withdrawContractBalance(address payable _withdrawReceiver, uint256 _withdrawAmount) external requireContractOwner {
 
         require(_withdrawAmount <= contractAddress.balance, "Invalid withdraw value!");
 
@@ -152,13 +145,13 @@ contract NoteChain {
     }
 
 
-    function switchPaused() external requireValidOrigin requireContractManager {
+    function switchPaused() external requireContractManager {
 
         paused = !paused;
     }
 
 
-    function registerNewAuthor(string calldata _authorName) external payable requireNotPaused requireNotRegisteredAuthor requireValidOrigin requireRegisterFee {
+    function registerNewAuthor(string calldata _authorName) external payable requireNotPaused requireValidOrigin requireRegisterFee requireNotRegisteredAuthor {
 
         authorProfile[msg.sender].isRegistered = true;
         authorProfile[msg.sender].authorName   = _authorName;
@@ -170,7 +163,7 @@ contract NoteChain {
         emit registerEvent(msg.sender, block.timestamp);
     }
 
-    function opRegisterNewAuthor(address _authorAddress, string calldata _authorName, string calldata _newIpfsFileHash) external requireValidOrigin requireContractOperator {
+    function opRegisterNewAuthor(address _authorAddress, string calldata _authorName, string calldata _newIpfsFileHash) external requireContractOperator {
 
         require(authorProfile[_authorAddress].isRegistered == false, "Author already registered!");
 
@@ -185,7 +178,7 @@ contract NoteChain {
         emit opRegisterEvent(_authorAddress, block.timestamp);
     }
 
-    function setAuthorName(string calldata _newAuthorName) external payable requireNotPaused requireRegisteredAuthor requireValidOrigin requireEditFee {
+    function setAuthorName(string calldata _newAuthorName) external payable requireNotPaused requireValidOrigin requireEditFee requireRegisteredAuthor {
 
         authorProfile[msg.sender].authorName   = _newAuthorName;
         authorProfile[msg.sender].lastEditTime = block.timestamp;
@@ -193,7 +186,7 @@ contract NoteChain {
         emit editEvent(msg.sender, block.timestamp);
     }
 
-    function setIpfsFileHash(string calldata _newIpfsFileHash) external payable requireNotPaused requireRegisteredAuthor requireValidOrigin requireEditFee {
+    function setIpfsFileHash(string calldata _newIpfsFileHash) external payable requireNotPaused requireValidOrigin requireEditFee requireRegisteredAuthor {
 
         authorProfile[msg.sender].ipfsPreviousFileHash = authorProfile[msg.sender].ipfsCurrentFileHash;
         authorProfile[msg.sender].ipfsCurrentFileHash  = _newIpfsFileHash;
@@ -202,14 +195,15 @@ contract NoteChain {
         emit editEvent(msg.sender, block.timestamp);
     }
 
+    function restoreIpfsFileHash() external requireNotPaused requireValidOrigin requireRegisteredAuthor {
 
-    function getBootstrap() external view requireValidCaller returns (bool, uint256, uint256, Profile memory) {
+        authorProfile[msg.sender].ipfsCurrentFileHash = authorProfile[msg.sender].ipfsPreviousFileHash;
+        authorProfile[msg.sender].lastEditTime        = block.timestamp;
 
-        return (paused, registerPrice, editPrice, authorProfile[msg.sender]);
+        emit editEvent(msg.sender, block.timestamp);
     }
 
-
-    function removeRegisteredAuthor() external requireValidOrigin requireRegisteredAuthor {
+    function removeRegisteredAuthor() external requireNotPaused requireValidOrigin requireRegisteredAuthor {
 
         delete(authorProfile[msg.sender]);
 
@@ -218,6 +212,11 @@ contract NoteChain {
         emit unregisterEvent(msg.sender, block.timestamp);
     }
 
+
+    function getBootstrap() external view requireValidCaller returns (bool, uint256, uint256, Profile memory) {
+
+        return (paused, registerPrice, editPrice, authorProfile[msg.sender]);
+    }
 
     function getAllAuthors() external view requireValidCaller returns (address[] memory) {
 
