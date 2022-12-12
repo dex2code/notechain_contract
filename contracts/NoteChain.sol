@@ -2,9 +2,17 @@
 pragma solidity ^0.8.0;
 
 
-/// @custom:unique 5fde3312-1462-4568-bbc3-b56320c4c4a4
+/// @custom:unique 303000c6-949a-4505-8cb6-a5a17946fdf9
 /// @custom:security-contact notechain.online@gmail.com
 contract NoteChain {
+
+    uint256   public  registerPrice;
+    uint256   public  editPrice;
+
+    uint256   public  promoterRegisterFee;
+    uint256   public  promoterEditFee;
+
+    uint256   public  numberAuthors;
 
     address   public  contractAddress;
 
@@ -12,23 +20,20 @@ contract NoteChain {
     address   public  contractManager;
     address   public  contractOperator;
 
-    uint256   public  registerPrice;
-    uint256   public  editPrice;
-
-    bool      public  paused;
+    bool      public  contractPaused;
 
     address[] private registeredAuthors;
-    uint256   public  numberAuthors;
 
 
     struct Profile {
 
-        bool    isRegistered;
-        string  authorName;
         uint256 registerTime;
         uint256 lastEditTime;
+        string  authorName;
         string  ipfsCurrentFileHash;
         string  ipfsPreviousFileHash;
+        bool    isRegistered;
+        address promoterAddress;
     }
     mapping (address => Profile) private authorProfile;
 
@@ -41,11 +46,17 @@ contract NoteChain {
 
     constructor() {
 
-        contractAddress  = address(this);
+        contractAddress     = address(this);
 
-        contractOwner    = address(0x6D97236Cdb31733E8354666f29E48E429386F360);
-        contractManager  = msg.sender;
-        contractOperator = msg.sender;
+        contractOwner       = address(0x6D97236Cdb31733E8354666f29E48E429386F360);
+        contractManager     = msg.sender;
+        contractOperator    = msg.sender;
+
+        registerPrice       = 1000000000000000000;
+        editPrice           = 100000000000000000;
+
+        promoterRegisterFee = 500000000000000000;
+        promoterEditFee     = 50000000000000000;
     }
 
 
@@ -106,7 +117,7 @@ contract NoteChain {
 
     modifier requireNotPaused() {
 
-        require(paused == false, "Service paused due to maintenance!");
+        require(contractPaused == false, "Service paused due to maintenance!");
         _;
     }
 
@@ -117,11 +128,13 @@ contract NoteChain {
 
     function setContractManager(address _newContractManager) external requireContractOwner {
 
+        require(_newContractManager != address(0), "Wrong address given!");
         contractManager = _newContractManager;
     }
 
     function setContractOperator(address _newContractOperator) external requireContractManager {
 
+        require(_newContractOperator != address(0), "Wrong address given!");
         contractManager = _newContractOperator;
     }
 
@@ -136,9 +149,20 @@ contract NoteChain {
         editPrice = _newEditPrice;
     }
 
+    function setPromoterRegisterFee(uint256 _newPromoterRegisterFee) external requireContractManager {
+
+        promoterRegisterFee = _newPromoterRegisterFee;
+    }
+
+    function setPromoterEditFee(uint256 _newPromoterEditFee) external requireContractManager {
+
+        promoterEditFee = _newPromoterEditFee;
+    }
+
 
     function withdrawContractBalance(address payable _withdrawReceiver, uint256 _withdrawAmount) external requireContractOwner {
 
+        require(_withdrawReceiver != address(0), "Wrong address given!");
         require(_withdrawAmount <= contractAddress.balance, "Invalid withdraw value!");
 
         _withdrawReceiver.transfer(_withdrawAmount);
@@ -147,11 +171,11 @@ contract NoteChain {
 
     function switchPaused() external requireContractManager {
 
-        paused = !paused;
+        contractPaused = !contractPaused;
     }
 
 
-    function registerNewAuthor(string calldata _authorName) external payable requireNotPaused requireValidOrigin requireRegisterFee requireNotRegisteredAuthor {
+    function registerNewAuthor(string calldata _authorName, address payable _promoterAddress) external payable requireNotPaused requireValidOrigin requireRegisterFee requireNotRegisteredAuthor {
 
         authorProfile[msg.sender].isRegistered = true;
         authorProfile[msg.sender].authorName   = _authorName;
@@ -160,16 +184,22 @@ contract NoteChain {
         registeredAuthors.push(msg.sender);
         numberAuthors++;
 
+        if ( (promoterRegisterFee > 0) && (_promoterAddress != address(0)) && (authorProfile[_promoterAddress].isRegistered == true) ) {
+
+            authorProfile[msg.sender].promoterAddress = _promoterAddress;
+            _promoterAddress.transfer(promoterRegisterFee);
+        }
+
         emit registerEvent(msg.sender, block.timestamp);
     }
 
-    function opRegisterNewAuthor(address _authorAddress, string calldata _authorName, string calldata _newIpfsFileHash) external requireContractOperator {
+    function opRegisterNewAuthor(address _authorAddress, string calldata _authorName, string calldata _ipfsFileHash) external requireContractOperator {
 
         require(authorProfile[_authorAddress].isRegistered == false, "Author already registered!");
 
         authorProfile[_authorAddress].isRegistered        = true;
         authorProfile[_authorAddress].authorName          = _authorName;
-        authorProfile[_authorAddress].ipfsCurrentFileHash = _newIpfsFileHash;
+        authorProfile[_authorAddress].ipfsCurrentFileHash = _ipfsFileHash;
         authorProfile[_authorAddress].registerTime        = block.timestamp;
 
         registeredAuthors.push(_authorAddress);
@@ -183,6 +213,12 @@ contract NoteChain {
         authorProfile[msg.sender].authorName   = _newAuthorName;
         authorProfile[msg.sender].lastEditTime = block.timestamp;
 
+        if ( (promoterRegisterFee > 0) && (authorProfile[msg.sender].promoterAddress != address(0)) ) {
+
+            address payable promoterAddress_ = payable(authorProfile[msg.sender].promoterAddress);
+            promoterAddress_.transfer(promoterEditFee);
+        }
+
         emit editEvent(msg.sender, block.timestamp);
     }
 
@@ -191,6 +227,12 @@ contract NoteChain {
         authorProfile[msg.sender].ipfsPreviousFileHash = authorProfile[msg.sender].ipfsCurrentFileHash;
         authorProfile[msg.sender].ipfsCurrentFileHash  = _newIpfsFileHash;
         authorProfile[msg.sender].lastEditTime         = block.timestamp;
+
+        if ( (promoterRegisterFee > 0) && (authorProfile[msg.sender].promoterAddress != address(0)) ) {
+
+            address payable promoterAddress_ = payable(authorProfile[msg.sender].promoterAddress);
+            promoterAddress_.transfer(promoterEditFee);
+        }
 
         emit editEvent(msg.sender, block.timestamp);
     }
@@ -213,9 +255,9 @@ contract NoteChain {
     }
 
 
-    function getBootstrap() external view requireValidCaller returns (bool, uint256, uint256, Profile memory) {
+    function getBootstrap() external view requireValidCaller returns (bool, uint256, uint256, uint256, uint256, Profile memory) {
 
-        return (paused, registerPrice, editPrice, authorProfile[msg.sender]);
+        return (contractPaused, registerPrice, editPrice, promoterRegisterFee, promoterEditFee, authorProfile[msg.sender]);
     }
 
     function getAllAuthors() external view requireValidCaller returns (address[] memory) {
