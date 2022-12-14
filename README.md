@@ -10,6 +10,6 @@ Mainnet Contract: https://polygonscan.com/address/0x71F5AA705194e046d4526E0499c7
 
 Contract with Loyalty engine:
 
-Mumbai Contract: https://mumbai.polygonscan.com/address/0x6D1F60054D556f656412C687e86A7c010DA43Af2
+Mumbai Contract: https://mumbai.polygonscan.com/address/0x7AdD71fB9984bB0917525AF963239fC50d635c86
 
-Mainnet Contract: https://polygonscan.com/address/0x6646e3aabFe19586B68530380b6f59560310E3cc
+Mainnet Contract: https://polygonscan.com/address/0xad349c79aB7f6988bDEcc98fFA22E6c4e49e4511
