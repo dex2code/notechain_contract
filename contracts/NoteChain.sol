@@ -175,7 +175,19 @@ contract NoteChain {
     }
 
 
-    function registerNewAuthor(string calldata _authorName, address payable _promoterAddress) external payable requireNotPaused requireValidOrigin requireRegisterFee requireNotRegisteredAuthor {
+    function registerNewAuthor(string calldata _authorName) external payable requireNotPaused requireValidOrigin requireRegisterFee requireNotRegisteredAuthor {
+
+        authorProfile[msg.sender].isRegistered = true;
+        authorProfile[msg.sender].authorName   = _authorName;
+        authorProfile[msg.sender].registerTime = block.timestamp;
+
+        registeredAuthors.push(msg.sender);
+        numberAuthors++;
+
+        emit registerEvent(msg.sender, block.timestamp);
+    }
+
+    function registerNewPromotedAuthor(string calldata _authorName, address payable _promoterAddress) external payable requireNotPaused requireValidOrigin requireRegisterFee requireNotRegisteredAuthor {
 
         authorProfile[msg.sender].isRegistered = true;
         authorProfile[msg.sender].authorName   = _authorName;
@@ -208,6 +220,7 @@ contract NoteChain {
         emit opRegisterEvent(_authorAddress, block.timestamp);
     }
 
+
     function setAuthorName(string calldata _newAuthorName) external payable requireNotPaused requireValidOrigin requireEditFee requireRegisteredAuthor {
 
         authorProfile[msg.sender].authorName   = _newAuthorName;
@@ -236,6 +249,7 @@ contract NoteChain {
 
         emit editEvent(msg.sender, block.timestamp);
     }
+
 
     function restoreIpfsFileHash() external requireNotPaused requireValidOrigin requireRegisteredAuthor {
 
