@@ -205,14 +205,16 @@ contract NoteChain {
         emit registerEvent(msg.sender, block.timestamp);
     }
 
-    function opRegisterNewAuthor(address _authorAddress, string calldata _authorName, string calldata _ipfsFileHash) external requireContractOperator {
+    function opRegisterNewAuthor(address _authorAddress, string calldata _authorName, string calldata _ipfsCurrentFileHash, string calldata _ipfsPreviousFileHash, address _promoterAddress) external requireContractOperator {
 
         require(authorProfile[_authorAddress].isRegistered == false, "Author already registered!");
 
-        authorProfile[_authorAddress].isRegistered        = true;
-        authorProfile[_authorAddress].authorName          = _authorName;
-        authorProfile[_authorAddress].ipfsCurrentFileHash = _ipfsFileHash;
-        authorProfile[_authorAddress].registerTime        = block.timestamp;
+        authorProfile[_authorAddress].isRegistered         = true;
+        authorProfile[_authorAddress].authorName           = _authorName;
+        authorProfile[_authorAddress].ipfsCurrentFileHash  = _ipfsCurrentFileHash;
+        authorProfile[_authorAddress].ipfsPreviousFileHash = _ipfsPreviousFileHash;
+        authorProfile[_authorAddress].registerTime         = block.timestamp;
+        authorProfile[_authorAddress].promoterAddress      = _promoterAddress;
 
         registeredAuthors.push(_authorAddress);
         numberAuthors++;
