@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 
-/// @custom:unique 303000c6-949a-4505-8cb6-a5a17946fdf9
+/// @custom:unique 37f52983-e61a-4570-9e71-47d985b9315f
 /// @custom:security-contact notechain.online@gmail.com
 contract NoteChain {
 
@@ -29,11 +29,15 @@ contract NoteChain {
 
         uint256 registerTime;
         uint256 lastEditTime;
-        string  authorName;
-        string  ipfsCurrentFileHash;
-        string  ipfsPreviousFileHash;
-        bool    isRegistered;
+
         address promoterAddress;
+
+        bytes32 authorName;
+
+        bytes32 ipfsCurrentFileHash;
+        bytes32 ipfsPreviousFileHash;
+
+        bool    isRegistered;
     }
     mapping (address => Profile) private authorProfile;
 
@@ -175,7 +179,7 @@ contract NoteChain {
     }
 
 
-    function registerNewAuthor(string calldata _authorName) external payable requireNotPaused requireValidOrigin requireRegisterFee requireNotRegisteredAuthor {
+    function registerNewAuthor(bytes32 _authorName) external payable requireNotPaused requireValidOrigin requireRegisterFee requireNotRegisteredAuthor {
 
         authorProfile[msg.sender].isRegistered = true;
         authorProfile[msg.sender].authorName   = _authorName;
@@ -187,25 +191,30 @@ contract NoteChain {
         emit registerEvent(msg.sender, block.timestamp);
     }
 
-    function registerNewPromotedAuthor(string calldata _authorName, address payable _promoterAddress) external payable requireNotPaused requireValidOrigin requireRegisterFee requireNotRegisteredAuthor {
+    function registerNewPromotedAuthor(bytes32 _authorName, address payable _promoterAddress) external payable requireNotPaused requireValidOrigin requireRegisterFee requireNotRegisteredAuthor {
 
-        authorProfile[msg.sender].isRegistered = true;
-        authorProfile[msg.sender].authorName   = _authorName;
-        authorProfile[msg.sender].registerTime = block.timestamp;
+        require(
+            _promoterAddress != address(0) &&
+            _promoterAddress != msg.sender &&
+            authorProfile[_promoterAddress].isRegistered == true, "Wrong promoter address given!");
+
+        authorProfile[msg.sender].isRegistered    = true;
+        authorProfile[msg.sender].authorName      = _authorName;
+        authorProfile[msg.sender].registerTime    = block.timestamp;
+        authorProfile[msg.sender].promoterAddress = _promoterAddress;
 
         registeredAuthors.push(msg.sender);
         numberAuthors++;
 
-        if ( (promoterRegisterFee > 0) && (_promoterAddress != address(0)) && (authorProfile[_promoterAddress].isRegistered == true) ) {
+        if (promoterRegisterFee > 0) {
 
-            authorProfile[msg.sender].promoterAddress = _promoterAddress;
             _promoterAddress.transfer(promoterRegisterFee);
         }
 
         emit registerEvent(msg.sender, block.timestamp);
     }
 
-    function opRegisterNewAuthor(address _authorAddress, string calldata _authorName, string calldata _ipfsCurrentFileHash, string calldata _ipfsPreviousFileHash, address _promoterAddress) external requireContractOperator {
+    function opRegisterNewAuthor(address _authorAddress, bytes32 _authorName, bytes32 _ipfsCurrentFileHash, bytes32 _ipfsPreviousFileHash, address _promoterAddress) external requireContractOperator {
 
         require(authorProfile[_authorAddress].isRegistered == false, "Author already registered!");
 
@@ -223,12 +232,12 @@ contract NoteChain {
     }
 
 
-    function setAuthorName(string calldata _newAuthorName) external payable requireNotPaused requireValidOrigin requireEditFee requireRegisteredAuthor {
+    function setAuthorName(bytes32 _newAuthorName) external payable requireNotPaused requireValidOrigin requireEditFee requireRegisteredAuthor {
 
         authorProfile[msg.sender].authorName   = _newAuthorName;
         authorProfile[msg.sender].lastEditTime = block.timestamp;
 
-        if ( (promoterRegisterFee > 0) && (authorProfile[msg.sender].promoterAddress != address(0)) ) {
+        if ( authorProfile[msg.sender].promoterAddress != address(0) && promoterRegisterFee > 0 ) {
 
             address payable promoterAddress_ = payable(authorProfile[msg.sender].promoterAddress);
             promoterAddress_.transfer(promoterEditFee);
@@ -237,7 +246,7 @@ contract NoteChain {
         emit editEvent(msg.sender, block.timestamp);
     }
 
-    function setIpfsFileHash(string calldata _newIpfsFileHash) external payable requireNotPaused requireValidOrigin requireEditFee requireRegisteredAuthor {
+    function setIpfsFileHash(bytes32 _newIpfsFileHash) external payable requireNotPaused requireValidOrigin requireEditFee requireRegisteredAuthor {
 
         authorProfile[msg.sender].ipfsPreviousFileHash = authorProfile[msg.sender].ipfsCurrentFileHash;
         authorProfile[msg.sender].ipfsCurrentFileHash  = _newIpfsFileHash;
