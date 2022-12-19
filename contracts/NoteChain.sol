@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 
-/// @custom:unique 37f52983-e61a-4570-9e71-47d985b9315f
+/// @custom:unique 38eaee7e-0a7f-4538-9f18-84e3ee8ac260
 /// @custom:security-contact notechain.online@gmail.com
 contract NoteChain {
 
@@ -11,8 +11,6 @@ contract NoteChain {
 
     uint256   public  promoterRegisterFee;
     uint256   public  promoterEditFee;
-
-    uint256   public  numberAuthors;
 
     address   public  contractAddress;
 
@@ -31,8 +29,6 @@ contract NoteChain {
         uint256 lastEditTime;
 
         address promoterAddress;
-
-        bytes32 authorName;
 
         bytes32 ipfsCurrentFileHash;
         bytes32 ipfsPreviousFileHash;
@@ -56,11 +52,17 @@ contract NoteChain {
         contractManager     = msg.sender;
         contractOperator    = msg.sender;
 
-        registerPrice       = 1000000000000000000;
-        editPrice           = 100000000000000000;
+        // Mainnet values (Wei)
+//        registerPrice       = 1000000000000000000;
+//        promoterRegisterFee = 500000000000000000;
+//        editPrice           = 100000000000000000;
+//        promoterEditFee     = 50000000000000000;
 
-        promoterRegisterFee = 500000000000000000;
-        promoterEditFee     = 50000000000000000;
+        // Mumbai  values (Wei)
+        registerPrice       = 40000000000000000;
+        promoterRegisterFee = 30000000000000000;
+        editPrice           = 20000000000000000;
+        promoterEditFee     = 10000000000000000;
     }
 
 
@@ -72,50 +74,50 @@ contract NoteChain {
 
     modifier requireValidOrigin() {
 
-        require(msg.sender != address(0), "Wrong caller address!");
-        require(msg.sender == tx.origin, "Wrong origin address!");
+        require(msg.sender != address(0),    "Wrong caller address!");
+        require(msg.sender == tx.origin,     "Wrong origin address!");
         require(msg.sender.code.length == 0, "Contracts not allowed!");
         _;
     }
 
     modifier requireContractOwner() {
 
-        require(msg.sender == contractOwner, "You are not an Owner!");
+        require(msg.sender == contractOwner, "You are not an owner!");
         _;
     }
 
     modifier requireContractManager() {
 
-        require(msg.sender == contractOwner || msg.sender == contractManager, "You are not a Manager!");
+        require(msg.sender == contractOwner || msg.sender == contractManager, "You are not a manager!");
         _;
     }
 
     modifier requireContractOperator() {
 
-        require(msg.sender == contractOwner || msg.sender == contractManager || msg.sender == contractOperator, "You are not an Operator!");
+        require(msg.sender == contractOwner || msg.sender == contractManager || msg.sender == contractOperator, "You are not an operator!");
         _;
     }
 
     modifier requireNotRegisteredAuthor() {
 
-        require(authorProfile[msg.sender].isRegistered == false, "You are already an Author!");
+        require(authorProfile[msg.sender].isRegistered == false, "You are already an author!");
         _;
     }
 
     modifier requireRegisteredAuthor() {
 
-        require(authorProfile[msg.sender].isRegistered == true, "You are not an Author yet!");
+        require(authorProfile[msg.sender].isRegistered == true, "You are not an author yet!");
         _;
     }
 
     modifier requireRegisterFee() {
 
-        require(msg.value == registerPrice, "Incorrect Register Fee value!");
+        require(msg.value == registerPrice, "Incorrect register fee value!");
         _;
     }
 
     modifier requireEditFee() {
-        require(msg.value == editPrice, "Incorrect Edit Fee value!");
+        require(msg.value == editPrice, "Incorrect edit fee value!");
         _;
     }
 
@@ -155,11 +157,13 @@ contract NoteChain {
 
     function setPromoterRegisterFee(uint256 _newPromoterRegisterFee) external requireContractManager {
 
+        require(_newPromoterRegisterFee < registerPrice, "Wrong promoter register fee value!");
         promoterRegisterFee = _newPromoterRegisterFee;
     }
 
     function setPromoterEditFee(uint256 _newPromoterEditFee) external requireContractManager {
 
+        require(_newPromoterEditFee < editPrice, "Wrong promoter edit fee value!");
         promoterEditFee = _newPromoterEditFee;
     }
 
@@ -179,32 +183,27 @@ contract NoteChain {
     }
 
 
-    function registerNewAuthor(bytes32 _authorName) external payable requireNotPaused requireValidOrigin requireRegisterFee requireNotRegisteredAuthor {
+    function registerNewAuthor() external payable requireNotPaused requireValidOrigin requireRegisterFee requireNotRegisteredAuthor {
 
         authorProfile[msg.sender].isRegistered = true;
-        authorProfile[msg.sender].authorName   = _authorName;
         authorProfile[msg.sender].registerTime = block.timestamp;
 
         registeredAuthors.push(msg.sender);
-        numberAuthors++;
 
         emit registerEvent(msg.sender, block.timestamp);
     }
 
-    function registerNewPromotedAuthor(bytes32 _authorName, address payable _promoterAddress) external payable requireNotPaused requireValidOrigin requireRegisterFee requireNotRegisteredAuthor {
+    function registerNewPromotedAuthor(address payable _promoterAddress) external payable requireNotPaused requireValidOrigin requireRegisterFee requireNotRegisteredAuthor {
 
-        require(
-            _promoterAddress != address(0) &&
-            _promoterAddress != msg.sender &&
-            authorProfile[_promoterAddress].isRegistered == true, "Wrong promoter address given!");
+        require(_promoterAddress != address(0), "Wrong promoter address!");
+        require(_promoterAddress != msg.sender, "Wrong promoter address!");
+        require(authorProfile[_promoterAddress].isRegistered == true, "Wrong promoter address!");
 
         authorProfile[msg.sender].isRegistered    = true;
-        authorProfile[msg.sender].authorName      = _authorName;
         authorProfile[msg.sender].registerTime    = block.timestamp;
         authorProfile[msg.sender].promoterAddress = _promoterAddress;
 
         registeredAuthors.push(msg.sender);
-        numberAuthors++;
 
         if (promoterRegisterFee > 0) {
 
@@ -214,37 +213,24 @@ contract NoteChain {
         emit registerEvent(msg.sender, block.timestamp);
     }
 
-    function opRegisterNewAuthor(address _authorAddress, bytes32 _authorName, bytes32 _ipfsCurrentFileHash, bytes32 _ipfsPreviousFileHash, address _promoterAddress) external requireContractOperator {
+    function opRegisterNewAuthor(address _authorAddress, bytes32 _ipfsCurrentFileHash, bytes32 _ipfsPreviousFileHash, address _promoterAddress) external requireContractOperator {
 
+        require(_authorAddress != address(0), "Wrong author address!");
         require(authorProfile[_authorAddress].isRegistered == false, "Author already registered!");
 
+        require(_promoterAddress != _authorAddress, "Wrong promoter address!");
+
         authorProfile[_authorAddress].isRegistered         = true;
-        authorProfile[_authorAddress].authorName           = _authorName;
         authorProfile[_authorAddress].ipfsCurrentFileHash  = _ipfsCurrentFileHash;
         authorProfile[_authorAddress].ipfsPreviousFileHash = _ipfsPreviousFileHash;
         authorProfile[_authorAddress].registerTime         = block.timestamp;
         authorProfile[_authorAddress].promoterAddress      = _promoterAddress;
 
         registeredAuthors.push(_authorAddress);
-        numberAuthors++;
 
         emit opRegisterEvent(_authorAddress, block.timestamp);
     }
 
-
-    function setAuthorName(bytes32 _newAuthorName) external payable requireNotPaused requireValidOrigin requireEditFee requireRegisteredAuthor {
-
-        authorProfile[msg.sender].authorName   = _newAuthorName;
-        authorProfile[msg.sender].lastEditTime = block.timestamp;
-
-        if ( authorProfile[msg.sender].promoterAddress != address(0) && promoterRegisterFee > 0 ) {
-
-            address payable promoterAddress_ = payable(authorProfile[msg.sender].promoterAddress);
-            promoterAddress_.transfer(promoterEditFee);
-        }
-
-        emit editEvent(msg.sender, block.timestamp);
-    }
 
     function setIpfsFileHash(bytes32 _newIpfsFileHash) external payable requireNotPaused requireValidOrigin requireEditFee requireRegisteredAuthor {
 
@@ -274,8 +260,6 @@ contract NoteChain {
 
         delete(authorProfile[msg.sender]);
 
-        numberAuthors--;
-        
         emit unregisterEvent(msg.sender, block.timestamp);
     }
 
@@ -285,7 +269,7 @@ contract NoteChain {
         return (contractPaused, registerPrice, editPrice, promoterRegisterFee, promoterEditFee, authorProfile[msg.sender]);
     }
 
-    function getAllAuthors() external view requireValidCaller returns (address[] memory) {
+    function getRegisteredAuthors() external view requireValidCaller returns (address[] memory) {
 
         return registeredAuthors;
     }
