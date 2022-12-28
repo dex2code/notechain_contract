@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 
-/// @custom:unique 38eaee7e-0a7f-4538-9f18-84e3ee8ac260
+/// @custom:unique 0a1e0b84-7df2-4fc1-bccd-f92ce46d34d9
 /// @custom:security-contact notechain.online@gmail.com
 contract NoteChain {
 
@@ -68,13 +68,13 @@ contract NoteChain {
 
     modifier requireValidCaller() {
 
-        require(msg.sender != address(0), "Wrong caller address!");
+        require(msg.sender != address(0), "Zero caller address!");
         _;
     }
 
     modifier requireValidOrigin() {
 
-        require(msg.sender != address(0),    "Wrong caller address!");
+        require(msg.sender != address(0),    "Zero caller address!");
         require(msg.sender == tx.origin,     "Wrong origin address!");
         require(msg.sender.code.length == 0, "Contracts not allowed!");
         _;
@@ -134,13 +134,13 @@ contract NoteChain {
 
     function setContractManager(address _newContractManager) external requireContractOwner {
 
-        require(_newContractManager != address(0), "Wrong address given!");
+        require(_newContractManager != address(0), "Zero address given!");
         contractManager = _newContractManager;
     }
 
     function setContractOperator(address _newContractOperator) external requireContractManager {
 
-        require(_newContractOperator != address(0), "Wrong address given!");
+        require(_newContractOperator != address(0), "Zero address given!");
         contractManager = _newContractOperator;
     }
 
@@ -170,7 +170,7 @@ contract NoteChain {
 
     function withdrawContractBalance(address payable _withdrawReceiver, uint256 _withdrawAmount) external requireContractOwner {
 
-        require(_withdrawReceiver != address(0), "Wrong address given!");
+        require(_withdrawReceiver != address(0), "Zero address given!");
         require(_withdrawAmount <= contractAddress.balance, "Invalid withdraw value!");
 
         _withdrawReceiver.transfer(_withdrawAmount);
@@ -195,9 +195,9 @@ contract NoteChain {
 
     function registerNewPromotedAuthor(address payable _promoterAddress) external payable requireNotPaused requireValidOrigin requireRegisterFee requireNotRegisteredAuthor {
 
-        require(_promoterAddress != address(0), "Wrong promoter address!");
+        require(_promoterAddress != address(0), "Zero promoter address!");
         require(_promoterAddress != msg.sender, "Wrong promoter address!");
-        require(authorProfile[_promoterAddress].isRegistered == true, "Wrong promoter address!");
+        require(authorProfile[_promoterAddress].isRegistered == true, "Promoter is not registered!");
 
         authorProfile[msg.sender].isRegistered    = true;
         authorProfile[msg.sender].registerTime    = block.timestamp;
@@ -215,10 +215,8 @@ contract NoteChain {
 
     function opRegisterNewAuthor(address _authorAddress, bytes32 _ipfsCurrentFileHash, bytes32 _ipfsPreviousFileHash, address _promoterAddress) external requireContractOperator {
 
-        require(_authorAddress != address(0), "Wrong author address!");
+        require(_authorAddress != address(0), "Zero author address!");
         require(authorProfile[_authorAddress].isRegistered == false, "Author already registered!");
-
-        require(_promoterAddress != _authorAddress, "Wrong promoter address!");
 
         authorProfile[_authorAddress].isRegistered         = true;
         authorProfile[_authorAddress].ipfsCurrentFileHash  = _ipfsCurrentFileHash;

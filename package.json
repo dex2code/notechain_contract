@@ -7,7 +7,7 @@
 
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "recompile": "npx hardhat clean && rm -rf ./ABI && npx hardhat compile && mkdir -p ./ABI && cp ./artifacts/contracts/NoteChain.sol/NoteChain.json ./ABI/"
+    "abi": "npx hardhat clean && rm -rf ./ABI && npx hardhat compile && mkdir -p ./ABI && cp ./artifacts/contracts/NoteChain.sol/NoteChain.json ./ABI/"
   },
 
   "repository": {
