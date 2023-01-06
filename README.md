@@ -14,4 +14,4 @@ New contract with bytes32:
 
 Mumbai Contract: https://mumbai.polygonscan.com/address/0xf57002803E25b7996326e129d64d57AC60b25EE5
 
-Mainnet Contract:
+Mainnet Contract: https://polygonscan.com/address/0x59c136C7d5cb2F43b629720c03DeC27d55F1CEEc

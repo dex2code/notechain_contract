@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 
-/// @custom:unique 0a1e0b84-7df2-4fc1-bccd-f92ce46d34d9
+/// @custom:unique 61b1ee51-d622-45a0-9e7a-301c728ceb21
 /// @custom:security-contact notechain.online@gmail.com
 contract NoteChain {
 
@@ -53,16 +53,17 @@ contract NoteChain {
         contractOperator    = msg.sender;
 
         // Mainnet values (Wei)
-//        registerPrice       = 1000000000000000000;
-//        promoterRegisterFee = 500000000000000000;
-//        editPrice           = 100000000000000000;
-//        promoterEditFee     = 50000000000000000;
+        registerPrice       = 1000000000000000000;
+        promoterRegisterFee = 500000000000000000;
+        editPrice           = 100000000000000000;
+        promoterEditFee     = 50000000000000000;
 
-        // Mumbai  values (Wei)
+/*        // Mumbai  values (Wei)
         registerPrice       = 40000000000000000;
         promoterRegisterFee = 30000000000000000;
         editPrice           = 20000000000000000;
         promoterEditFee     = 10000000000000000;
+*/
     }
 
 
